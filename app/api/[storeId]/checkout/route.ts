@@ -1,7 +1,6 @@
-const midtransClient = require('midtrans-client')
+const midtransClient = require("midtrans-client");
 import prismadb from "@/lib/prismadb";
-import { randomUUID } from "crypto";
-import next from "next";
+
 import { NextResponse } from "next/server";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,7 +16,7 @@ export async function POST(
   req: Request,
   { params }: { params: { storeId: string } }
 ) {
-  const { productIds, formData, totalPrice} = await req.json();
+  const { productIds, formData, totalPrice } = await req.json();
 
   if (!productIds || productIds.length == 0) {
     return new NextResponse("Product ids is required", { status: 400 });
@@ -33,19 +32,16 @@ export async function POST(
 
   let snap = new midtransClient.Snap({
     isProduction: false,
-    serverKey: process.env.SERVER_KEY_MIDTRANS ,
-    clientKey: process.env.CLIENT_KEY_MIDTRANS ,
-  })
-
-  
-
+    serverKey: process.env.SERVER_KEY_MIDTRANS,
+    clientKey: process.env.CLIENT_KEY_MIDTRANS,
+  });
 
   const orders = await prismadb.order.create({
     data: {
       storeId: params.storeId,
       isPaid: false,
-      phone : formData.phone,
-      address : formData.address,
+      phone: formData.phone,
+      address: formData.address,
       orderItem: {
         create: productIds.map((productId: string) => ({
           product: {
@@ -58,11 +54,10 @@ export async function POST(
     },
   });
 
-  
   let parameter = {
     transaction_details: {
       order_id: orders.id,
-      gross_amount : totalPrice ,
+      gross_amount: totalPrice,
     },
     credit_card: {
       secure: true,
@@ -76,21 +71,22 @@ export async function POST(
       merchant_id: product.id,
     })),
     customer_details: {
-      first_name : formData.name,
-      phone : formData.phone,
-      billing_address : {
-        first_name : formData.name,
-        phone : formData.phone,
-        address : formData.address,
-      }
+      first_name: formData.name,
+      phone: formData.phone,
+      billing_address: {
+        first_name: formData.name,
+        phone: formData.phone,
+        address: formData.address,
+      },
     },
-  }
+  };
 
-  const transaction = await snap.createTransaction(parameter)
-  
-  return NextResponse.json({transaction}, {
-    headers : corsHeaders
-  })
+  const transaction = await snap.createTransaction(parameter);
 
-
+  return NextResponse.json(
+    { transaction },
+    {
+      headers: corsHeaders,
+    }
+  );
 }
