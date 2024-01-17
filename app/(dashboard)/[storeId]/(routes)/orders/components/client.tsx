@@ -20,7 +20,7 @@ export const OrderClient : React.FC<OrderClientProps> = ({
           descriptions="Menage order for your store"
         />
       <Separator />
-      <DataTable searchKey="product" columns={columns} data={data}/>
+      <DataTable searchKey="products" columns={columns} data={data}/>
     </>
   );
 };

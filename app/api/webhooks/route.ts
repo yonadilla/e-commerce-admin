@@ -4,48 +4,40 @@ import { randomUUID } from "crypto";
 import next from "next";
 import { NextResponse } from "next/server";
 
-
 export async function POST(
   req: Request,
-  { params }: { params: { storeId: string } }
 ) {
-  const { productIds} = await req.json();
-
-  if (!productIds || productIds.length == 0) {
-    return new NextResponse("Product ids is required", { status: 400 });
-  }
-
-  const products = await prismadb.product.findMany({
-    where: {
-      id: {
-        in: productIds,
-      },
-    },
-  });
+  const body = await req.json();
 
 
-  const orders = await prismadb.order.update({
-    where : {
-        id : productIds,
-    },
-    data : {
-        isPaid : true,
-    },
-    include : {
-        orderItem : true
-    }
-  });
+  console.log(body);
 
-  await prismadb.product.updateMany({
-    where : {
-      id : {
-        in : [...productIds]
+  
+  let orderId = body.order_id;
+  let transactionStatus = body.transaction_status;
+  let fraudStatus = body.fraud_status;
+  
+  console.log(`Transaction notification received. Order ID: ${orderId}. Transaction status: ${transactionStatus}. Fraud status: ${fraudStatus}`);
+    
+    if (transactionStatus === 'capture' || transactionStatus == 'settlement') {
+      if(fraudStatus == 'accept') {
+        await prismadb.order.update({
+          where :{
+            id : orderId,
+          },
+          data : {
+            isPaid : true,
+          },
+          include : {
+            orderItem : true
+          }
+        })
       }
-    },
-    data : {
-      isArchived : true,
     }
-  })
 
-  return NextResponse.json(null, {status: 200})
+  
+
+  return NextResponse.json(null, {
+    status : 200,
+  })
 }

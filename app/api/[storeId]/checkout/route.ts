@@ -31,8 +31,6 @@ export async function POST(
     },
   });
 
-  const uuid = randomUUID()
-  
   let snap = new midtransClient.Snap({
     isProduction: false,
     serverKey: process.env.SERVER_KEY_MIDTRANS ,
@@ -40,35 +38,6 @@ export async function POST(
   })
 
   
-
-  let parameter = {
-    transaction_details: {
-      order_id: uuid,
-      gross_amount : totalPrice ,
-    },
-    credit_card: {
-      secure: true,
-    },
-    item_details: products.map((product) => ({
-      id: product.id,
-      price: product.price,
-      quantity: 1,
-      name: product.name,
-      category: product.categoryId,
-      merchant_id: product.storeId,
-    })),
-    customer_details: {
-      first_name : formData.name,
-      phone : formData.phone,
-      billing_address : {
-        first_name : formData.name,
-        phone : formData.phone,
-        address : formData.address,
-      }
-    },
-  }
-
-  const transaction = await snap.createTransaction(parameter)
 
 
   const orders = await prismadb.order.create({
@@ -89,7 +58,36 @@ export async function POST(
     },
   });
 
+  
+  let parameter = {
+    transaction_details: {
+      order_id: orders.id,
+      gross_amount : totalPrice ,
+    },
+    credit_card: {
+      secure: true,
+    },
+    item_details: products.map((product) => ({
+      id: product.id,
+      price: product.price,
+      quantity: 1,
+      name: product.name,
+      category: product.categoryId,
+      merchant_id: product.id,
+    })),
+    customer_details: {
+      first_name : formData.name,
+      phone : formData.phone,
+      billing_address : {
+        first_name : formData.name,
+        phone : formData.phone,
+        address : formData.address,
+      }
+    },
+  }
 
+  const transaction = await snap.createTransaction(parameter)
+  
   return NextResponse.json({transaction}, {
     headers : corsHeaders
   })
