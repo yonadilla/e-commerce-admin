@@ -1,7 +1,5 @@
 const midtransClient = require('midtrans-client')
 import prismadb from "@/lib/prismadb";
-import { randomUUID } from "crypto";
-import next from "next";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -10,9 +8,6 @@ export async function POST(
   const body = await req.json();
 
 
-  console.log(body);
-
-  
   let orderId = body.order_id;
   let transactionStatus = body.transaction_status;
   let fraudStatus = body.fraud_status;
